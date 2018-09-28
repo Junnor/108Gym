@@ -101,7 +101,6 @@ extension ViewController {
         present(alertVC, animated: true, completion: nil)
     }
     
-    
     private func add(isExercise: Bool) {
 
         let obj = GymCheckModel()
