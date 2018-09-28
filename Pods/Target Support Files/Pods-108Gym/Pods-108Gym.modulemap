@@ -1,0 +1,6 @@
+framework module Pods_108Gym {
+  umbrella header "Pods-108Gym-umbrella.h"
+
+  export *
+  module * { export * }
+}
