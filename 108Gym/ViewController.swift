@@ -40,8 +40,8 @@ class ViewController: UIViewController {
         CalendarView.Style.cellShape                = .bevel(8.0)
         CalendarView.Style.cellColorDefault         = UIColor.clear
         CalendarView.Style.cellColorToday           = UIColor(red:1.00, green:0.84, blue:0.64, alpha:1.00)
-        CalendarView.Style.cellSelectedBorderColor  = UIColor(red:1.00, green:0.63, blue:0.24, alpha:1.00)
-        CalendarView.Style.cellEventColor           = UIColor(red:1.00, green:0.63, blue:0.24, alpha:1.00)
+        CalendarView.Style.cellSelectedBorderColor  = UIColor.cyan
+        CalendarView.Style.cellEventColor           = UIColor.cyan
         CalendarView.Style.headerTextColor          = UIColor.white
         CalendarView.Style.cellTextColorDefault     = UIColor.white
         CalendarView.Style.cellTextColorToday       = UIColor(red:0.31, green:0.44, blue:0.47, alpha:1.00)
@@ -58,11 +58,6 @@ class ViewController: UIViewController {
         
         calendarView.backgroundColor = UIColor(red:0.31, green:0.44, blue:0.47, alpha:1.00)
         
-        let items = results.map {
-            return self.createCalendarEvent(check: $0)
-        }
-        print("items = \(items)")
-        self.calendarView.events = Array(items)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -72,7 +67,14 @@ class ViewController: UIViewController {
         let today = Date()
         self.calendarView.setDisplayDate(today)
         
-        self.calendarView.reloadData()
+        let items = results.map {
+            return self.createCalendarEvent(check: $0)
+        }
+        print("items = \(items)")
+        self.calendarView.events = Array(items)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.calendarView.reloadData()
+        }
     }
 
     private func createCalendarEvent(check: GymCheckModel) -> CalendarEvent {
@@ -112,17 +114,27 @@ extension ViewController: CalendarViewDelegate {
     }
     
     func calendar(_ calendar: CalendarView, didLongPressDate date: Date) {
-                
-        let alert = UIAlertController(title: "签到", message: nil, preferredStyle: .alert)
-        let ok = UIAlertAction(title: "确定", style: .default) { (alert) in
-            self.addExerciseDate(date)
+        // remove check
+        if let check = sameCheckModelForDate(date) {
+            try! realm.write {
+                realm.delete(check)
+            }
+            
+            // TODO: replce
+            self.calendarView.events.removeLast()
+        } else {
+            // add
+            let alert = UIAlertController(title: "签到", message: nil, preferredStyle: .alert)
+            let ok = UIAlertAction(title: "确定", style: .default) { (alert) in
+                self.addExerciseDate(date)
+            }
+            let cancel = UIAlertAction(title: "取消", style: .destructive, handler: nil)
+            
+            alert.addAction(ok)
+            alert.addAction(cancel)
+            
+            self.present(alert, animated: true, completion: nil)
         }
-        let cancel = UIAlertAction(title: "取消", style: .destructive, handler: nil)
-     
-        alert.addAction(ok)
-        alert.addAction(cancel)
-        
-        self.present(alert, animated: true, completion: nil)
     }
     
     func calendar(_ calendar: CalendarView, didScrollToMonth date: Date) {
@@ -142,6 +154,18 @@ extension ViewController: CalendarViewDelegate {
 // MARK: - Add action
 extension ViewController {
     
+    
+    
+    private func sameCheckModelForDate(_ date: Date) -> GymCheckModel? {
+        for item in results {
+            let itemDate = Date.init(timeIntervalSince1970: item.date)
+            if Calendar.current.isDate(date, inSameDayAs: itemDate) {
+                return item
+            }
+        }
+        return nil
+    }
+    
     private func addExerciseDate(_ date: Date) {
         
         let obj = GymCheckModel()
@@ -157,4 +181,8 @@ extension ViewController {
     }
     
     
+    private func removeExerciseDate(_ date: Date) {
+        
+    }
+
 }
