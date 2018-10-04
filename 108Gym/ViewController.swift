@@ -8,16 +8,15 @@
 
 import UIKit
 import RealmSwift
+import KDCalendar
 
 class ViewController: UIViewController {
     
-    @IBOutlet weak var tableView: UITableView! {
-        didSet {
-            tableView.dataSource = self
-            tableView.delegate = self
-        }
-    }
-        
+    // Calendar
+    var calendarView: CalendarView!
+    var textView: UITextView!
+    
+    // Ream
     let realm = try! Realm()
     
     var results = try! Realm().objects(GymCheckModel.self)
@@ -28,56 +27,130 @@ class ViewController: UIViewController {
         
         title = "108天签到"
         
-        let addItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.add, target: self, action: #selector(addAction))
-        self.navigationItem.rightBarButtonItem = addItem
         
-        notification = results.observe({ (changes) in
-            switch changes {
-            case .initial:
-                // Results are now populated and can be accessed without blocking the UI
-                self.tableView.reloadData()
-            case .update(_, let deletions, let insertions, let modifications):
-                // Query results have changed, so apply them to the TableView
-                self.tableView.beginUpdates()
-                self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                self.tableView.endUpdates()
-            case .error(let err):
-                // An error occurred while opening the Realm file on the background worker thread
-                print("realm error = \(err)")
-            }
-        })
+        let edge: CGFloat = 16
+        
+        calendarView = CalendarView()
+        view.addSubview(calendarView)
+        calendarView.translatesAutoresizingMaskIntoConstraints = false
+        calendarView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: edge).isActive = true
+        calendarView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -edge).isActive = true
+        calendarView.topAnchor.constraint(equalTo: self.topLayoutGuide.bottomAnchor, constant: 20).isActive = true
+        calendarView.heightAnchor.constraint(equalTo: calendarView.widthAnchor).isActive = true
+
+        textView = UITextView()
+        textView.backgroundColor = UIColor.lightGray
+        view.addSubview(textView)
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: edge).isActive = true
+        textView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -edge).isActive = true
+        textView.topAnchor.constraint(equalTo: self.calendarView.bottomAnchor, constant: 10).isActive = true
+        textView.bottomAnchor.constraint(equalTo: self.bottomLayoutGuide.topAnchor, constant: -10).isActive = true
+
+        CalendarView.Style.cellShape                = .bevel(8.0)
+        CalendarView.Style.cellColorDefault         = UIColor.clear
+        CalendarView.Style.cellColorToday           = UIColor(red:1.00, green:0.84, blue:0.64, alpha:1.00)
+        CalendarView.Style.cellSelectedBorderColor  = UIColor(red:1.00, green:0.63, blue:0.24, alpha:1.00)
+        CalendarView.Style.cellEventColor           = UIColor(red:1.00, green:0.63, blue:0.24, alpha:1.00)
+        CalendarView.Style.headerTextColor          = UIColor.white
+        CalendarView.Style.cellTextColorDefault     = UIColor.white
+        CalendarView.Style.cellTextColorToday       = UIColor(red:0.31, green:0.44, blue:0.47, alpha:1.00)
+        
+        CalendarView.Style.firstWeekday             = .monday
+        
+        calendarView.dataSource = self
+        calendarView.delegate = self
+        
+        calendarView.direction = .horizontal
+        calendarView.multipleSelectionEnable = false
+        calendarView.marksWeekends = true
+        
+        
+        calendarView.backgroundColor = UIColor(red:0.31, green:0.44, blue:0.47, alpha:1.00)
+
+//        notification = results.observe({ (changes) in
+//            switch changes {
+//            case .initial:
+//                // Results are now populated and can be accessed without blocking the UI
+//                self.tableView.reloadData()
+//            case .update(_, let deletions, let insertions, let modifications):
+//                // Query results have changed, so apply them to the TableView
+//                self.tableView.beginUpdates()
+//                self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+//                self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+//                self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+//                self.tableView.endUpdates()
+//            case .error(let err):
+//                // An error occurred while opening the Realm file on the background worker thread
+//                print("realm error = \(err)")
+//            }
+//        })
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        
+        super.viewDidAppear(animated)
+        
+        let today = Date()
+        
+        var tomorrowComponents = DateComponents()
+        tomorrowComponents.day = 1
+        
+        
+        let tomorrow = self.calendarView.calendar.date(byAdding: tomorrowComponents, to: today)!
+        self.calendarView.selectDate(tomorrow)
+        
+        self.calendarView.setDisplayDate(today)
+    }
+
+    
+    private func planStartDate() -> Date {
+        let dateFormatter = DateFormatter()
+        dateFormatter.setLocalizedDateFormatFromTemplate("yyyy-MM-dd")
+        let date = dateFormatter.date(from: "2018-09-17")!
+        return date
     }
     
 }
 
-// MARK: - UITableViewDataSource, UITableViewDelegate
-extension ViewController: UITableViewDataSource, UITableViewDelegate {
+// MARK: - CalendarViewDataSource
+extension ViewController: CalendarViewDataSource {
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return results.count
+    func startDate() -> Date {
+        return planStartDate()
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CheckCell", for: indexPath)
-        
-        let object = results[indexPath.row]
-        cell.textLabel?.text = object.title
-        cell.detailTextLabel?.text = object.detail
-        
-        return cell
+    func endDate() -> Date {
+        var dateComponents = DateComponents()
+        dateComponents.year = 1
+        let oneYearLate = self.calendarView.calendar.date(byAdding: dateComponents, to: planStartDate())!
+        return oneYearLate
     }
-    
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            realm.beginWrite()
-            realm.delete(results[indexPath.row])
-            try! realm.commitWrite()
-        }
-    }
-    
+
 }
+
+extension ViewController: CalendarViewDelegate {
+    
+    func calendar(_ calendar: CalendarView, didDeselectDate date: Date) {
+        
+    }
+    
+    func calendar(_ calendar: CalendarView, didLongPressDate date: Date) {
+        
+    }
+    
+    func calendar(_ calendar: CalendarView, didScrollToMonth date: Date) {
+        
+    }
+    
+    func calendar(_ calendar: CalendarView, didSelectDate date: Date, withEvents events: [CalendarEvent]) {
+        
+    }
+    
+    func calendar(_ calendar: CalendarView, canSelectDate date: Date) -> Bool {
+        return true
+    }
+}
+
 
 // MARK: - Add action
 extension ViewController {

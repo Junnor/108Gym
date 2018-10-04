@@ -1,4 +1,5 @@
 PODS:
+  - KDCalendar (1.6.2)
   - Realm (3.10.0):
     - Realm/Headers (= 3.10.0)
   - Realm/Headers (3.10.0)
@@ -6,17 +7,20 @@ PODS:
     - Realm (= 3.10.0)
 
 DEPENDENCIES:
+  - KDCalendar (~> 1.6.2)
   - RealmSwift
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
+    - KDCalendar
     - Realm
     - RealmSwift
 
 SPEC CHECKSUMS:
+  KDCalendar: 096590e9f2b80a97a61b7400dceca986c0722b73
   Realm: 85ab9e4f779d66f6e9ffeb118dc25b7f130c96ac
   RealmSwift: 69121c8b86d0ae005fb779efdb10e606732e1c74
 
-PODFILE CHECKSUM: b631e2eb1578667c8177edc859768527eb94aa80
+PODFILE CHECKSUM: 554665ffd95eabd619447c7ac94fba8e7ded0a29
 
 COCOAPODS: 1.5.0
