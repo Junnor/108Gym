@@ -60,13 +60,7 @@ class ViewController: UIViewController {
         
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        
-        super.viewDidAppear(animated)
-        
-        let today = Date()
-        self.calendarView.setDisplayDate(today)
-        
+    private func refreshCalendarEvents() {
         let items = results.map {
             return self.createCalendarEvent(check: $0)
         }
@@ -75,6 +69,16 @@ class ViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.calendarView.reloadData()
         }
+
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        
+        super.viewDidAppear(animated)
+        
+        let today = Date()
+        self.calendarView.setDisplayDate(today)
+        refreshCalendarEvents()
     }
 
     private func createCalendarEvent(check: GymCheckModel) -> CalendarEvent {
@@ -114,27 +118,33 @@ extension ViewController: CalendarViewDelegate {
     }
     
     func calendar(_ calendar: CalendarView, didLongPressDate date: Date) {
+        let alert: UIAlertController
+        let ok: UIAlertAction
+        
         // remove check
         if let check = sameCheckModelForDate(date) {
-            try! realm.write {
-                realm.delete(check)
+            alert = UIAlertController(title: "删除签到", message: nil, preferredStyle: .alert)
+            ok = UIAlertAction(title: "确定", style: .default) { (alert) in
+                try! self.realm.write {
+                    self.realm.delete(check)
+                }
+                
+                self.refreshCalendarEvents()
             }
-            
-            // TODO: replce
-            self.calendarView.events.removeLast()
         } else {
             // add
-            let alert = UIAlertController(title: "签到", message: nil, preferredStyle: .alert)
-            let ok = UIAlertAction(title: "确定", style: .default) { (alert) in
+            alert = UIAlertController(title: "签到", message: nil, preferredStyle: .alert)
+            ok = UIAlertAction(title: "确定", style: .default) { (alert) in
                 self.addExerciseDate(date)
             }
-            let cancel = UIAlertAction(title: "取消", style: .destructive, handler: nil)
-            
-            alert.addAction(ok)
-            alert.addAction(cancel)
-            
-            self.present(alert, animated: true, completion: nil)
         }
+        
+        let cancel = UIAlertAction(title: "取消", style: .destructive, handler: nil)
+        
+        alert.addAction(ok)
+        alert.addAction(cancel)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
     func calendar(_ calendar: CalendarView, didScrollToMonth date: Date) {
