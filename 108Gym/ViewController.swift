@@ -21,6 +21,20 @@ class ViewController: UIViewController {
     var results = try! Realm().objects(GymCheckModel.self)
     var notification: NotificationToken?
     
+    @IBOutlet weak var totalCountLabel: UILabel! {
+        didSet {
+            totalCountLabel.text = ""
+        }
+    }
+    
+    @IBOutlet weak var passDaysLabel: UILabel!
+    
+    @IBOutlet weak var signInButton: UIButton! {
+        didSet {
+            signInButton.addTarget(self, action: #selector(signInToday), for: .touchUpInside)
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -39,12 +53,12 @@ class ViewController: UIViewController {
 
         CalendarView.Style.cellShape                = .bevel(8.0)
         CalendarView.Style.cellColorDefault         = UIColor.clear
-        CalendarView.Style.cellColorToday           = UIColor(red:1.00, green:0.84, blue:0.64, alpha:1.00)
+        CalendarView.Style.cellColorToday           = UIColor.red.withAlphaComponent(0.3)
         CalendarView.Style.cellSelectedBorderColor  = UIColor.cyan
         CalendarView.Style.cellEventColor           = UIColor.cyan
         CalendarView.Style.headerTextColor          = UIColor.white
         CalendarView.Style.cellTextColorDefault     = UIColor.white
-        CalendarView.Style.cellTextColorToday       = UIColor(red:0.31, green:0.44, blue:0.47, alpha:1.00)
+        CalendarView.Style.cellTextColorToday       = UIColor.white
         
         CalendarView.Style.firstWeekday             = .monday
         
@@ -58,6 +72,16 @@ class ViewController: UIViewController {
         
         calendarView.backgroundColor = UIColor(red:0.31, green:0.44, blue:0.47, alpha:1.00)
         
+        notification = results.observe({ (changes) in
+            self.totalCountLabel.text = "共打卡：\(self.results.count)天"
+        })
+        
+        // 今日已打卡
+        if let _ = sameCheckModelForDate(today) {
+            updateSignInButton(isEnabled: false)
+        }
+        
+        passDaysLabel.text = "过去\(self.daysInterval())天"
     }
     
     private func refreshCalendarEvents() {
@@ -76,9 +100,20 @@ class ViewController: UIViewController {
         
         super.viewDidAppear(animated)
         
-        let today = Date()
         self.calendarView.setDisplayDate(today)
         refreshCalendarEvents()
+    }
+    
+    var today = Date()
+    
+    func isDateInToday(_ date: Date) -> Bool {
+        return calendarView.calendar.isDateInToday(date)
+    }
+    
+    func daysInterval() -> Int {
+        let cp = calendarView.calendar.dateComponents([.day], from: startDate(), to: today)
+        var days = cp.day ?? 0
+        return days
     }
 
     private func createCalendarEvent(check: GymCheckModel) -> CalendarEvent {
@@ -93,6 +128,29 @@ class ViewController: UIViewController {
         return date
     }
     
+    // 今日打卡
+    @objc private func signInToday() {
+        let alert = UIAlertController(title: "签到", message: nil, preferredStyle: .alert)
+        let ok = UIAlertAction(title: "确定", style: .default) { (alert) in
+            self.addExerciseDate(self.today, completion: { success in
+                if success {
+                    self.updateSignInButton(isEnabled: false)
+                }
+            })
+        }
+        let cancel = UIAlertAction(title: "取消", style: .default, handler: nil)
+        
+        alert.addAction(ok)
+        alert.addAction(cancel)
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    private func updateSignInButton(isEnabled: Bool) {
+        self.signInButton.setTitle(isEnabled ? "打卡" : "已打卡", for: .normal)
+        self.signInButton.isEnabled = isEnabled
+    }
+
 }
 
 // MARK: - CalendarViewDataSource
@@ -130,16 +188,29 @@ extension ViewController: CalendarViewDelegate {
                 }
                 
                 self.refreshCalendarEvents()
+                
+                // 是今日
+                if self.isDateInToday(date) {
+                    self.updateSignInButton(isEnabled: true)
+                }
             }
         } else {
             // add
             alert = UIAlertController(title: "签到", message: nil, preferredStyle: .alert)
             ok = UIAlertAction(title: "确定", style: .default) { (alert) in
-                self.addExerciseDate(date)
+                self.addExerciseDate(date, completion: { success in
+                    if success {
+                        // 是今日
+                        if self.isDateInToday(date) {
+                            self.updateSignInButton(isEnabled: false)
+                        }
+                    }
+                })
+
             }
         }
         
-        let cancel = UIAlertAction(title: "取消", style: .destructive, handler: nil)
+        let cancel = UIAlertAction(title: "取消", style: .default, handler: nil)
         
         alert.addAction(ok)
         alert.addAction(cancel)
@@ -176,7 +247,7 @@ extension ViewController {
         return nil
     }
     
-    private func addExerciseDate(_ date: Date) {
+    private func addExerciseDate(_ date: Date, completion: @escaping(_ success: Bool) -> ()) {
         
         let obj = GymCheckModel()
         obj.date = date.timeIntervalSince1970
@@ -188,6 +259,7 @@ extension ViewController {
         let event = createCalendarEvent(check: obj)
         self.calendarView.events.append(event)
         
+        completion(true)
     }
     
     
