@@ -28,11 +28,16 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="0RX-vW-gXx">
                                 <rect key="frame" x="16" y="383" width="343" height="264"/>
                                 <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="15" translatesAutoresizingMaskIntoConstraints="NO" id="CV4-YC-f2o">
-                                        <rect key="frame" x="129" y="82.5" width="85.5" height="99"/>
+                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="30" translatesAutoresizingMaskIntoConstraints="NO" id="CV4-YC-f2o">
+                                        <rect key="frame" x="129" y="75" width="85.5" height="114"/>
                                         <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kjR-DR-5vG">
+                                                <rect key="frame" x="12" y="0.0" width="61" height="48"/>
+                                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="30"/>
+                                                <state key="normal" title="打卡"/>
+                                            </button>
                                             <stackView opaque="NO" contentMode="scaleToFill" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="in7-lj-WvI">
-                                                <rect key="frame" x="0.0" y="0.0" width="85.5" height="36"/>
+                                                <rect key="frame" x="0.0" y="78" width="85.5" height="36"/>
                                                 <subviews>
                                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="10次" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1Kb-re-RsF">
                                                         <rect key="frame" x="0.0" y="0.0" width="64.5" height="36"/>
@@ -48,11 +53,6 @@
                                                     </label>
                                                 </subviews>
                                             </stackView>
-                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kjR-DR-5vG">
-                                                <rect key="frame" x="12" y="51" width="61" height="48"/>
-                                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="30"/>
-                                                <state key="normal" title="打卡"/>
-                                            </button>
                                         </subviews>
                                     </stackView>
                                 </subviews>

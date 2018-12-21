@@ -79,6 +79,8 @@ class ViewController: UIViewController {
         // 今日已打卡
         if let _ = sameCheckModelForDate(today) {
             updateSignInButton(isEnabled: false)
+        } else {
+            updateSignInButton(isEnabled: true)
         }
         
         passDaysLabel.text = "过去\(self.daysInterval())天"
@@ -112,7 +114,7 @@ class ViewController: UIViewController {
     
     func daysInterval() -> Int {
         let cp = calendarView.calendar.dateComponents([.day], from: startDate(), to: today)
-        var days = cp.day ?? 0
+        let days = cp.day ?? 0
         return days
     }
 
@@ -147,7 +149,7 @@ class ViewController: UIViewController {
     }
     
     private func updateSignInButton(isEnabled: Bool) {
-        self.signInButton.setTitle(isEnabled ? "打卡" : "已打卡", for: .normal)
+        self.signInButton.setTitle(isEnabled ? "今日打卡" : "已打卡", for: .normal)
         self.signInButton.isEnabled = isEnabled
     }
 
